@@ -1,42 +1,43 @@
-resolver: lts-12.26
+resolver: lts-13.19
 
 packages:
   - .
 
-extra-deps:
-  - aeson-1.4.3.0
-  - bloomfilter-2.0.1.0@sha256:5b67d765315fb2abc1cde85e3c20ae1badfbe8d1070ed57525b7c428586e2d2f
-  - compactable-0.1.2.2
-  - configuration-tools-0.4.0
-  - crackNum-2.3
-  - ed25519-donna-0.1.1
-  - fake-0.1.1.1@sha256:a551fed1dbdd2ce3629cb843597d24793562cdd136e1252ae2febe0b91d239a8
-  - fast-builder-0.1.0.0@sha256:a7a8f4de793c98424a8c92c806346692d8dc4f2cd6a284fbff1a0c88eac41814
-  - FloatingHex-0.4
-  - hspec-2.5.8
-  - hspec-core-2.5.8
-  - hspec-discover-2.5.8
-  - libyaml-0.1.1.0@sha256:b3fcd8c44622c75e054c2267f3fec39a58a311748000310cbc8257a4683d3f02,2090
-  - loglevel-0.1.0.0@sha256:951338d262fb734cc2f06a6ee9fddb7ea998a71a5098011d864f038f4ec7ac2a,1256
-  - massiv-0.3.0.0
-  - paths-0.2.0.0@sha256:85e77985968860365cdb2074515b339863344ca0d28baa879baf4105f93e87cc,2628
-  # QuickCheck-2.12
-  - QuickCheck-2.12.6.1
-  - QuickCheck-GenT-0.2.0
-  - rocksdb-haskell-1.0.1@sha256:3a437ec1cedea56e02ae85a8e37539151c5295cb228117e46aa90767f1072d61
-  - sbv-8.1
-  - scheduler-1.0.0@sha256:7f5ddfff0d911b089014f0d7668fe7380c65d94630f204f943181e04815b14ed
-  - strict-tuple-0.1.2@sha256:546cce0dae83a49f805749b3cdee6ccdbab425c58d78731bbe126dc0a758b80f
-  - tasty-1.2
-  - token-bucket-0.1.0.1@sha256:ef80a31e7f4f794e3686eb405a49afc663535dd3a11c012a002a7bacce897da6
-  - vector-algorithms-0.8.0.1@sha256:94ef7560517dfd133157e0532ccf3c039477a8eef4b270fe59b52a036fc1f0a1
-  - wai-middleware-throttle-0.3.0.0@sha256:7b2ad0c3c20f3f1ff75a211a7ce13346445a65f648ff5effaae87d11805ab4e5
-  - yaml-0.11.0.0
-  - yet-another-logger-0.3.1
+ghc-options:
+  pact: -fmax-pmcheck-iterations=5000 -Wwarn
 
+extra-deps:
+
+  # --- Missing from Stackge --- #
+  - QuickCheck-GenT-0.2.0@sha256:d11b7b4a3f7648895eff66376a00f763821ee955ce42a37fb918213a8eae88d6,1458
+  - bloomfilter-2.0.1.0@sha256:5b67d765315fb2abc1cde85e3c20ae1badfbe8d1070ed57525b7c428586e2d2f,1728
+  - fast-builder-0.1.0.1@sha256:da472dae5708cac39e8e1279d5771e44ed316517f0860a9fd42727655f8fc5be,2801
+  - fake-0.1.1.2
+  - loglevel-0.1.0.0@sha256:951338d262fb734cc2f06a6ee9fddb7ea998a71a5098011d864f038f4ec7ac2a,1256
+  - paths-0.2.0.0@sha256:85e77985968860365cdb2074515b339863344ca0d28baa879baf4105f93e87cc,2628
+  - scheduler-1.1.0@sha256:6d16a793b18fc3cbeb32767370d4960260afc9ecbf8f967000e2718c288d5f76,2665
+  - strict-tuple-0.1.2@sha256:546cce0dae83a49f805749b3cdee6ccdbab425c58d78731bbe126dc0a758b80f,1064
+  - yet-another-logger-0.3.1@sha256:cce98813591dd5631db0a5d8974daa89a16a27f1f425dc097b049356e7889693,4526
+
+  # --- Forced Upgrades --- #
+  - aeson-1.4.3.0@sha256:49f92cd7bd5e9bb447f0f284785e725f5bebc798ca60baa5438d0eaaece28399,6899
+  - massiv-0.3.2.0@sha256:01a5663715db0e040fbbc13ccc3560f12e5c00fce29acd4a0ad3622c0e9a9963,5899
+  - servant-0.16.0.1
+  - servant-client-0.16
+  - servant-client-core-0.16
+  - servant-server-0.16
+
+  # --- Transitive Pact Deps --- #
+  - ed25519-donna-0.1.1@sha256:344c0bb83603ed896012f441e54b380314dc4910320577cd18a9071e34f24fe9,2358
+  - megaparsec-6.5.0
+  - neat-interpolation-0.3.2.2  # Due to megaparsec 7
+  - prettyprinter-convert-ansi-wl-pprint-1.1@sha256:ae908ee44422c38a696858f04928d4b2448df656c09e6b5f5b1be05d99669fb0,3022
+  - sbv-8.2
+
+  # --- Custom Pins --- #
   - git: https://github.com/kadena-io/merkle-log.git
     commit: a7ae61d7082afe3aa1a0fd0546fc1351a2f7c376
   - git: https://github.com/kadena-io/pact.git
-    commit: 0cf36de796dc88051fc34469e31a589317631fb9
+    commit: e366438a22fd361622af051f26567e156b516fd4
   - git: https://github.com/kadena-io/thyme.git
     commit: 6ee9fcb026ebdb49b810802a981d166680d867c9
