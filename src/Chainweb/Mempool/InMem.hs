@@ -372,11 +372,13 @@ toMempoolBackend (InMemoryMempool cfg@(InMemConfig tcfg blockSizeLimit _)
     markValidated = markValidatedInMem cfg lockMVar
     markConfirmed = markConfirmedInMem lockMVar
     processFork = processForkInMem lockMVar blockHeaderDb payloadStore
+
     reintroduce = reintroduceInMem broadcaster cfg lockMVar
     getPending = getPendingInMem cfg lockMVar
     subscribe = subscribeInMem broadcaster
     shutdown = shutdownInMem broadcaster
     clear = clearInMem lockMVar
+
 
 
 ------------------------------------------------------------------------------
@@ -591,19 +593,34 @@ getPendingInMem cfg lock callback = do
     sendChunk dl _ = callback $ V.fromList $ dl []
 
 ------------------------------------------------------------------------------
-processForkInMem :: MVar (InMemoryMempoolData t)
+processForkInMem :: Ord x
+                 => MVar (InMemoryMempoolData t)
                  -> BlockHeaderDb
-                 -> Maybe (PayloadDb cas)
                  -> BlockHeader
-                 -> IO (Vector TransactionHash)
-processForkInMem lock blockHeaderDb payloadStore parentBlockHeader = do
+                 -> Maybe (PayloadDb cas)
+                 -> (BlockHeader -> IO (Vector TransactionHash))
+processForkInMem lock blockHeaderDb newHeader payloadStore = do
     theData <- readMVar lock
 
     -- convert: Maybe (IORef BlockHeader) -> Maybe BlockHeader
     lastHeader <- sequence $ fmap readIORef $ _inmemLastNewBlockParent theData
 
-    MPCon.processFork blockHeaderDb parentBlockHeader lastHeader payloadStore
+    MPCon.processFork blockHeaderDb newHeader lastHeader (payloadLookup payloadStore)
+    -- processFork
+    --     :: Ord x
+    --     => BlockHeaderDb
+    --     -> BlockHeader
+    --     -> Maybe BlockHeader
+    --     -> (BlockHeader -> IO (S.Set x))
+    --     -> IO (V.Vector x ij)
 
+payloadLookup :: PayloadDb cas -> BlockHeader -> IO (S.Set x)
+payloadLookup h =
+    case payloadStore of
+        Nothing -> return mempty
+        Just s ->
+            S.fromList . S.toList . fmap fst . _payloadWithOutputsTransactions
+            <$> casLookup s h
 
 ------------------------------------------------------------------------------
 reintroduceInMem :: TxBroadcaster t
@@ -617,7 +634,6 @@ reintroduceInMem broadcaster cfg lock txhashes = do
                    V.mapM (reintroduceOne mdata) txhashes
     -- we'll rebroadcast reintroduced transactions, clients can filter.
     broadcastTxs newOnes broadcaster
-
   where
     txcfg = _inmemTxCfg cfg
     price = txGasPrice txcfg

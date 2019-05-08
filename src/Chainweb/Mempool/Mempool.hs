@@ -138,7 +138,7 @@ data MempoolBackend t = MempoolBackend {
   , mempoolMarkConfirmed :: Vector TransactionHash -> IO ()
 
     -- | check for a fork, and re-introduce transactions from the losing branch if necessary
-  , mempoolProcessFork :: BlockHeader -> IO (Vector TransactionHash)
+  , mempoolProcessFork :: Ord x => BlockHeader -> IO (Set x)
 
     -- | These transactions were on a losing fork. Reintroduce them.
   , mempoolReintroduce :: Vector TransactionHash -> IO ()

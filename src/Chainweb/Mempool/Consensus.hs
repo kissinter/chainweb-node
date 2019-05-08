@@ -26,34 +26,28 @@ import Chainweb.Store.CAS hiding (casLookup)
 import Data.CAS
 ------------------------------------------------------------------------------
 processFork
-    :: IsCas a
+    :: Ord x
     => BlockHeaderDb
     -> BlockHeader
     -> Maybe BlockHeader
-    -> Maybe a
-    -> IO (Maybe (CasValueType a))
-processFork _db _newHeader Nothing _payloadDb = return Nothing
-processFork _db _newHeader _lastHeader Nothing =
-    throwM $ MempoolConsensusException "processFork = no PayloadDb was provided"
-processFork db newHeader (Just lastHeader) (Just payloadDb) = do
+    -> (BlockHeader -> IO (S.Set x))
+    -> IO (V.Vector x)
+processFork db newHeader (Just lastHeader) payloadLookup = do
 
     putStrLn $ "Process fork: newHeader = " ++ show ( _blockHash newHeader)
             ++ "lastHeader = " ++ show (_blockHash lastHeader)
 
     let s = branchDiff db newHeader lastHeader
     (oldBlocks, newBlocks) <- collectForkBlocks s
-    oldTrans <- foldM f V.empty oldBlocks
-    newTrans <- foldM f V.empty newBlocks
+    oldTrans <- foldM f mempty oldBlocks
+    newTrans <- foldM f mempty newBlocks
 
     -- before re-introducing the transactions from the losing fork (aka oldBlocks)
     -- filter out any transactions that have been included in the winning fork (aka newBlocks)
-    let diffTrans = S.fromList (V.toList oldTrans) `S.difference` S.fromList (V.toList newTrans)
-    return . V.fromList $ S.toList diffTrans
+    return $ V.fromList $ S.toList $ oldTrans `S.difference` newTrans
+  where
+    f trans header = S.union trans <$> payloadLookup header
 
-  where -- f :: Vector TransactionHash -> BlockHeader -> IO (CasValueType a)
-        f trans header = do
-            txs <- blockToTxs payloadDb header
-            return $ txs V.++ trans
 
 -- | Collect the blocks on the old and new branches of a fork.  The old blocks are in the first
 --   element of the tuple and the new blocks are in the second.
@@ -72,12 +66,32 @@ collectForkBlocks theStream =
             Right (BothD lBlk rBlk, strm) -> go strm ( V.cons lBlk oldBlocks,
                                                        V.cons rBlk newBlocks )
 
--- blockToTxs :: IsCas a => a -> BlockHeader -> IO (Vector TransactionHash)
-blockToTxs :: IsCas a => a -> BlockHeader -> IO (Data.CAS.CasValueType a)
-blockToTxs store header = do
-    case casLookup store (_blockHash header) of
-        Just txs -> return txs
-        Nothing  -> return V.empty
+-- blockToTxs :: (PayloadDb cas) -> BlockHeader -> IO (Vector TransactionHash)
+-- blockToTxs payloadStore header = do
+--     case casLookup payloadStore (_blockHash header) of
+--         Just txs -> return txs
+--         Nothing  -> return V.empty
+
+blockToTxs :: (PayloadDb cas) -> BlockHeader -> IO (Vector TransactionHash)
+blockToTxs payloadStore header = do
+
+
+
+payloadLookup :: BlockHeader -> IO (S.Set x)
+payloadLookup h =
+  payloadLookup'
+
+
+payloadLookup' :: BPayloadDb cas -> lockHeader -> IO (S.Set x)
+payloadLookup' h =
+    case payloadStore of
+        Nothing -> return mempty
+        Just s ->
+            S.fromList . S.toList . fmap fst . _payloadWithOutputsTransactions
+            <$> casLookup s h
+
+
+
 
 newtype MempoolException = MempoolConsensusException String
 
