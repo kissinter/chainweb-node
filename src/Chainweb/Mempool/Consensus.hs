@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 module Chainweb.Mempool.Consensus
 ( processFork
 ) where
@@ -25,6 +26,7 @@ import Chainweb.Store.CAS hiding (casLookup)
 
 import Data.CAS
 ------------------------------------------------------------------------------
+
 processFork
     :: Ord x
     => BlockHeaderDb
@@ -48,7 +50,6 @@ processFork db newHeader (Just lastHeader) payloadLookup = do
   where
     f trans header = S.union trans <$> payloadLookup header
 
-
 -- | Collect the blocks on the old and new branches of a fork.  The old blocks are in the first
 --   element of the tuple and the new blocks are in the second.
 collectForkBlocks
@@ -65,33 +66,6 @@ collectForkBlocks theStream =
             Right (RightD blk, strm) -> go strm (oldBlocks, V.cons blk newBlocks)
             Right (BothD lBlk rBlk, strm) -> go strm ( V.cons lBlk oldBlocks,
                                                        V.cons rBlk newBlocks )
-
--- blockToTxs :: (PayloadDb cas) -> BlockHeader -> IO (Vector TransactionHash)
--- blockToTxs payloadStore header = do
---     case casLookup payloadStore (_blockHash header) of
---         Just txs -> return txs
---         Nothing  -> return V.empty
-
-blockToTxs :: (PayloadDb cas) -> BlockHeader -> IO (Vector TransactionHash)
-blockToTxs payloadStore header = do
-
-
-
-payloadLookup :: BlockHeader -> IO (S.Set x)
-payloadLookup h =
-  payloadLookup'
-
-
-payloadLookup' :: BPayloadDb cas -> lockHeader -> IO (S.Set x)
-payloadLookup' h =
-    case payloadStore of
-        Nothing -> return mempty
-        Just s ->
-            S.fromList . S.toList . fmap fst . _payloadWithOutputsTransactions
-            <$> casLookup s h
-
-
-
 
 newtype MempoolException = MempoolConsensusException String
 
