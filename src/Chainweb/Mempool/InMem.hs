@@ -607,16 +607,16 @@ getPendingInMem cfg lock callback = do
 processForkInMem :: PayloadCas cas
                  => MVar (InMemoryMempoolData t)
                  -> BlockHeaderDb
-                 -> BlockHeader
                  -> Maybe (PayloadDb cas)
-                 -> (BlockHeader -> IO (Vector TransactionHash))
-processForkInMem lock blockHeaderDb newHeader payloadStore = do
+                 -> BlockHeader
+                 -> IO (Vector TransactionHash)
+processForkInMem lock blockHeaderDb payloadStore newHeader = do
     theData <- readMVar lock
 
     -- convert: Maybe (IORef BlockHeader) -> Maybe BlockHeader
     lastHeader <- sequence $ fmap readIORef $ _inmemLastNewBlockParent theData
 
-    MPCon.processFork blockHeaderDb parentBlockHeader lastHeader payloadLookup
+    MPCon.processFork blockHeaderDb newHeader lastHeader payloadLookup
   where
     payloadLookup h = case payloadStore of
         Nothing -> return mempty
@@ -630,6 +630,16 @@ processForkInMem lock blockHeaderDb newHeader payloadStore = do
     casLookupM s h = casLookup s h >>= \case
         Nothing -> throwIO $ PayloadNotFoundException h
         Just x -> return x
+
+
+
+-- processFork
+--     :: Ord x
+--     => BlockHeaderDb
+--     -> BlockHeader
+--     -> Maybe BlockHeader
+--     -> (BlockHeader -> IO (S.Set x))
+--     -> IO (V.Vector x)
 
 ------------------------------------------------------------------------------
 reintroduceInMem :: TxBroadcaster t
