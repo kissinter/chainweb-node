@@ -749,7 +749,9 @@ toBackend config (ClientState cChan _ _ _ _ _ _) =
         let final = atomically $ TBMChan.closeTBMChan subchan
         let sub = Subscription subchan final
         subref <- newIORef sub
-        weak <- mkWeakIORef subref final
+        weak <- mkWeakIORef subref $ do
+            putStrLn "{\"action\": \"finalize\", \"location\": \"Chainweb.Mempool.Socket.toBackend\" }"
+            final
 
         -- f only derefs the weak pointer, so if the callee drops the IORef
         -- we'll stop calling it

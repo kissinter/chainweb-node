@@ -221,6 +221,7 @@ syncMempools' log0 localMempool remoteMempool onInitialSyncComplete =
     cleanupSubscription (sub, th, p) = do
       Async.uninterruptibleCancel th
       freeStablePtr p
+      putStrLn $ "{\"action\":\"finalize\", \"location\":\"mempoolSubFinal\"}"
       mempoolSubFinal <$> readIORef sub
 
     -- TODO: update a counter and bug out if too many new txs read
